@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Simon: Food Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@600;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Lexend', sans-serif;
+            background: #36a1eb url('https://i.pinimg.com/originals/01/95/93/01959374090b8480391d1712a32193b2.jpg') no-repeat center center fixed;
+            background-size: cover;
+            overflow: hidden;
+        }
+
+        #game-container {
+            background: rgba(255, 255, 255, 0.97);
+            width: 98vw;
+            height: 96vh;
+            border-radius: 40px;
+            border: 12px solid #f9da06;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        #fs-toggle {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+
+        /* --- Title Screen --- */
+        .title-badge { background: #f9da06; padding: 10px 45px; border-radius: 50px; font-size: 2.5rem; color: #333; margin-bottom: -15px; z-index: 2; box-shadow: 0 5px 15px rgba(0,0,0,0.15); border: 4px solid white; font-weight: 900; }
+        .main-title { font-size: 10rem; color: #1e90ff; margin: 0; text-transform: uppercase; filter: drop-shadow(8px 8px 0px #f9da06); animation: titleFloat 3s ease-in-out infinite; }
+        .speak-icon-main { font-size: 8rem; margin: 15px 0; animation: pulseIcon 2s infinite; }
+
+        @keyframes titleFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.02); } }
+        @keyframes pulseIcon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        /* --- Instructions --- */
+        #instruction-screen h2 { font-size: 4.5rem; margin-top: 0; margin-bottom: 25px; color: #333; text-shadow: 3px 3px 0px #f9da06; }
+        .instruction-grid { display: flex; gap: 25px; justify-content: center; width: 100%; flex-grow: 1; margin-bottom: 20px; }
+        .inst-card { background: #f8f9fa; border: 8px solid #333; border-radius: 40px; padding: 30px; width: 30%; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .inst-card .card-header { font-size: 2rem; font-weight: 900; color: #e74c3c; min-height: 2.5rem; }
+        .inst-card .card-main-text { font-size: 3.5rem; color: #1e90ff; font-weight: 900; margin: 20px 0; }
+        .inst-card img { height: 120px; object-fit: contain; margin: 10px auto; }
+        .inst-label { font-size: 2.2rem; font-weight: 900; padding: 15px; border-radius: 20px; display: block; color: white; }
+
+        /* --- Game Arena --- */
+        #simon-says-text { font-size: 6rem; color: #e74c3c; font-weight: 900; height: 1.2em; margin-top: 10px; }
+        #vocab-display { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; position: relative; gap: 50px; }
+        .massive-text { font-size: 10vw; color: #1e90ff; font-weight: 900; white-space: nowrap; text-transform: lowercase; }
+        #vocab-display img { max-height: 55vh; max-width: 75%; object-fit: contain; }
+
+        /* --- Side Demo Icons --- */
+        .side-hint { font-size: 6rem; padding: 25px; background: white; border-radius: 30px; border: 8px solid #333; display: flex; flex-direction: column; align-items: center; animation: nudge 1.5s infinite; }
+        .side-hint span { font-size: 2rem; font-weight: 900; margin-top: 10px; }
+        .hint-speak { border-color: #2ecc71; color: #2ecc71; }
+        .hint-quiet { border-color: #e74c3c; color: #e74c3c; }
+
+        @keyframes nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(15px); } }
+
+        /* --- HUD & Buttons --- */
+        #timer { position: absolute; top: 30px; right: 30px; font-size: 3rem; color: #333; background: white; padding: 10px 35px; border-radius: 25px; border: 6px solid #f9da06; font-weight: 900; z-index: 10; }
+        #practice-tag { position: absolute; top: 30px; left: 30px; font-size: 2rem; color: white; background: #9b59b6; padding: 10px 30px; border-radius: 20px; font-weight: 900; z-index: 10; }
+        .arrow-btn { font-size: 4rem !important; padding: 15px 60px !important; background: #1e90ff !important; color: white !important; box-shadow: 0 10px 0 #0c69c3 !important; border-radius: 30px !important; margin-top: 20px; cursor: pointer; border: none; }
+        .btn { font-family: 'Lexend', sans-serif; font-size: 3rem; padding: 25px 60px; background: #f9da06; color: #333; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 10px 0 #c4ab05; font-weight: 900; transition: 0.1s; }
+        .btn-massive { font-size: 5rem; padding: 50px 90px; border-radius: 60px; background: #2ecc71; color: white; box-shadow: 0 20px 0 #27ae60; animation: pulse 1.5s infinite; text-align: center; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <button id="fs-toggle">⛶ Fullscreen</button>
+
+        <div id="start-screen" class="screen">
+            <div class="title-badge">Food Game</div>
+            <h1 class="main-title">Echo Simon</h1>
+            <div class="speak-icon-main">🗣️</div>
+            <div style="display: flex; gap: 40px; margin-top: 30px;">
+                <button id="how-to-btn" class="btn" style="background: #ffffff; color: #1e90ff; border: 5px solid #1e90ff; box-shadow: 0 10px 0 #1e90ff;">Instructions</button>
+                <button id="quick-start-btn" class="btn" style="background: #2ecc71; color: white; box-shadow: 0 10px 0 #27ae60;">Start Game!</button>
+            </div>
+        </div>
+
+        <div id="instruction-screen" class="screen hidden">
+            <h2>How to Play</h2>
+            <div class="instruction-grid">
+                <div class="inst-card" style="border-color: #2ecc71;">
+                    <div><div class="card-header">Simon says...</div><div class="card-main-text">water</div></div>
+                    <span class="inst-label" style="background: #2ecc71;">🗣️ SAY IT!</span>
+                </div>
+                <div class="inst-card" style="border-color: #e74c3c;">
+                    <div><div class="card-header" style="color: transparent;">Quiet</div><div class="card-main-text">water</div></div>
+                    <span class="inst-label" style="background: #e74c3c;">🤫 QUIET!</span>
+                </div>
+                <div class="inst-card" style="border-color: #36a1eb;">
+                    <div><div class="card-header" style="color: #444;">After 45s...</div><img src="https://i.ibb.co/MyN861G6/water.png" alt="water"></div>
+                    <span class="inst-label" style="background: #36a1eb;">🖼️ PICTURES!</span>
+                </div>
+            </div>
+            <button id="demo-btn" class="arrow-btn">➔</button>
+        </div>
+
+        <div id="practice-ready-screen" class="screen hidden">
+            <button id="real-practice-btn" class="btn btn-massive" style="background:#9b59b6; box-shadow:0 20px 0 #8e44ad;">Let's Practice!</button>
+        </div>
+
+        <div id="ready-screen" class="screen hidden">
+            <h2 style="font-size: 5rem; margin-bottom: 50px;">Practice Over!</h2>
+            <button id="real-start-btn" class="btn btn-massive">Are you ready?</button>
+        </div>
+
+        <div id="game-content" class="screen hidden">
+            <div id="timer" class="hidden">02:00</div>
+            <div id="practice-tag" class="hidden">PRACTICE</div>
+            <div id="simon-says-text"></div>
+            <div id="vocab-display">
+                <div id="left-hint"></div>
+                <div id="item-content"></div>
+                <div id="right-hint"></div>
+            </div>
+            <button id="arrow-next-btn" class="arrow-btn hidden">➔</button>
+        </div>
+    </div>
+
+    <audio id="bg-music" loop><source src="doraemon.mp3" type="audio/mpeg"></audio>
+    <audio id="pop-sound"><source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mpeg"></audio>
+    <audio id="finish-sound"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+
+<script>
+    const vocabulary = [
+        { text: "a hamburger", img: "https://i.ibb.co/ns7mwKc6/a-hamburger.png" },
+        { text: "two hamburgers", img: "https://i.ibb.co/Cs2vsPtS/2-hamburgers.png" },
+        { text: "a hot dog", img: "https://i.ibb.co/nsS3Pfmz/a-hot-dog.png" },
+        { text: "two hot dogs", img: "https://i.ibb.co/yFxYbDRP/two-hot-dogs.png" },
+        { text: "milk", img: "https://i.ibb.co/RG2kSxdH/milk.png" },
+        { text: "water", img: "https://i.ibb.co/MyN861G6/water.png" },
+        { text: "juice", img: "https://i.ibb.co/mVB43NK7/juice.png" },
+        { text: "ice cream", img: "https://i.ibb.co/j9JNVNqR/ice-cream.png" }
+    ];
+
+    let timeLeft, isPractice = false, trainingStep = 0, gameInterval, switchInterval;
+    let randomizedItems = [];
+
+    const screens = { start: document.getElementById('start-screen'), inst: document.getElementById('instruction-screen'), pracReady: document.getElementById('practice-ready-screen'), ready: document.getElementById('ready-screen'), game: document.getElementById('game-content') };
+
+    function hideAll() { Object.values(screens).forEach(s => s.classList.add('hidden')); document.getElementById('arrow-next-btn').classList.add('hidden'); document.getElementById('timer').classList.add('hidden'); }
+
+    function openFullscreen() {
+        let elem = document.documentElement;
+        if (elem.requestFullscreen) { elem.requestFullscreen(); }
+        else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
+        else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
+    }
+
+    document.getElementById('fs-toggle').addEventListener('click', openFullscreen);
+
+    function shuffleVocabulary() {
+        randomizedItems = [...vocabulary];
+        for (let i = randomizedItems.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [randomizedItems[i], randomizedItems[j]] = [randomizedItems[j], randomizedItems[i]];
+        }
+    }
+
+    document.getElementById('how-to-btn').addEventListener('click', () => { hideAll(); screens.inst.classList.remove('hidden'); });
+    document.getElementById('demo-btn').addEventListener('click', startManualDemo);
+    document.getElementById('arrow-next-btn').addEventListener('click', () => { trainingStep++; runTrainingLogic(); });
+    
+    document.getElementById('real-practice-btn').addEventListener('click', () => {
+        openFullscreen();
+        startSession(20, true);
+    });
+
+    document.getElementById('quick-start-btn').addEventListener('click', () => {
+        openFullscreen();
+        startSession(120, false); // 2 Minutes
+    });
+
+    document.getElementById('real-start-btn').addEventListener('click', () => {
+        openFullscreen();
+        startSession(120, false); // 2 Minutes
+    });
+
+    function startManualDemo() {
+        hideAll();
+        isPractice = true;
+        trainingStep = 1;
+        shuffleVocabulary();
+        screens.game.classList.remove('hidden');
+        document.getElementById('arrow-next-btn').classList.remove('hidden');
+        document.getElementById('practice-tag').classList.remove('hidden');
+        runTrainingLogic();
+    }
+
+    function runTrainingLogic() {
+        playPop();
+        const simonEl = document.getElementById('simon-says-text');
+        const leftH = document.getElementById('left-hint');
+        const rightH = document.getElementById('right-hint');
+        const itemC = document.getElementById('item-content');
+        leftH.innerHTML = ""; rightH.innerHTML = "";
+
+        const item1 = randomizedItems[0];
+        const item2 = randomizedItems[1];
+        const item3 = randomizedItems[2];
+
+        if (trainingStep === 1) {
+            simonEl.innerText = "Simon says...";
+            leftH.innerHTML = `<div class="side-hint hint-speak">🗣️<span>SPEAK</span></div>`;
+            itemC.innerHTML = `<span class="massive-text">${item1.text}</span>`;
+        } else if (trainingStep === 2) {
+            simonEl.innerText = "";
+            rightH.innerHTML = `<div class="side-hint hint-quiet">🤫<span>QUIET</span></div>`;
+            itemC.innerHTML = `<span class="massive-text">${item2.text}</span>`;
+        } else if (trainingStep === 3) {
+            simonEl.innerText = "Simon says...";
+            leftH.innerHTML = `<div class="side-hint hint-speak">🗣️<span>SPEAK</span></div>`;
+            itemC.innerHTML = `<span class="massive-text">${item3.text}</span>`;
+        } else {
+            hideAll();
+            screens.pracReady.classList.remove('hidden');
+        }
+    }
+
+    function startSession(time, practiceMode) {
+        hideAll();
+        isPractice = practiceMode;
+        timeLeft = time;
+        shuffleVocabulary();
+        document.getElementById('left-hint').innerHTML = "";
+        document.getElementById('right-hint').innerHTML = "";
+        if(isPractice) document.getElementById('practice-tag').classList.remove('hidden');
+        else document.getElementById('practice-tag').classList.add('hidden');
+        document.getElementById('timer').classList.remove('hidden');
+        screens.game.classList.remove('hidden');
+        startMusic();
+        gameInterval = setInterval(updateTimer, 1000);
+        updateTimer(); // Initial call to show 02:00
+        setNewSpeed(3000);
+    }
+
+    function updateTimer() {
+        let min = Math.floor(Math.max(0, timeLeft) / 60);
+        let sec = Math.max(0, timeLeft) % 60;
+        document.getElementById('timer').innerText = `${min}:${sec.toString().padStart(2, '0')}`;
+        
+        if (!isPractice) {
+            // Adjust speed-up thresholds for 2 minute game
+            if (timeLeft === 60) setNewSpeed(2000); 
+            if (timeLeft === 20) setNewSpeed(1200);
+        }
+
+        if (timeLeft <= 0) {
+            clearInterval(gameInterval); clearInterval(switchInterval);
+            if (isPractice) { hideAll(); screens.ready.classList.remove('hidden'); }
+            else endGame();
+        }
+        timeLeft--;
+    }
+
+    function setNewSpeed(ms) { clearInterval(switchInterval); runGameLogic(); switchInterval = setInterval(runGameLogic, ms); }
+
+    function runGameLogic() {
+        playPop();
+        const item = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+        const isSimon = Math.random() > 0.4;
+        const simonEl = document.getElementById('simon-says-text');
+        simonEl.innerText = isSimon ? "Simon says..." : "";
+        const display = document.getElementById('item-content');
+        
+        // Pictures appear after 45s have passed (when 75s remain on clock)
+        if (isPractice || timeLeft > 75) display.innerHTML = `<span class="massive-text">${item.text}</span>`;
+        else display.innerHTML = `<img src="${item.img}">`;
+    }
+
+    function playPop() { const p = document.getElementById('pop-sound'); p.currentTime = 0; p.play(); }
+    function startMusic() { const m = document.getElementById('bg-music'); m.volume = 0.2; if (m.paused) m.play(); }
+    function endGame() {
+        document.getElementById('bg-music').pause();
+        document.getElementById('finish-sound').play();
+        document.getElementById('simon-says-text').innerText = "TIME'S UP!";
+        document.getElementById('item-content').innerHTML = "<span class='massive-text' style='color:#2ecc71'>well done!</span>";
+    }
+</script>
+</body>
+</html>
